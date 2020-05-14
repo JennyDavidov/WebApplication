@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+</head>
+<body>
+	<h2>Add new Flight</h2>
+	Flight_id <input type="number" /><br />
+	Longitude <input type="number" /><br />
+	Latitude <input type="number" /><br />
+	Passengers <input type="number" /><br />
+	Company_name <input type="text" /><br />
+	Date_time <input type="text" /><br />
+	Is_external <input type="checkbox" /><br />
+	<button id="btnAddFlight">Add Flight</button>
+
+	<h2>Flights table</h2>
+	<table id="tblFlights">
+		<tr>
+			<th>Flight_id</th>
+			<th>Longitude</th>
+			<th>Latitude</th>
+			<th>Passengers</th>
+			<th>Company_name</th>
+			<th>Date_time</th>
+			<th>Is_external</th>
+
+		</tr>
+	</table>
+
+	<script src="../Scripts/jquery/jquery.js"></script>
+	<script>
+		var flightUrl = "../api/Flights";
+		$.getJSON(flightUrl, function (data) {
+			data.forEach(function (flight) {
+				$("#tblFlights").append("<tr><td>" + flight.flight_id + "</td>" +
+					"<td>" + flight.longitude + "</td>" + "<td>" + flight.latitude + "</td>" +
+				"<td>" + flight.passengers + "</td>" + "<td>" + flight.company_name + "</td>" +
+					"<td>" + flight.date_time + "</td>" + "<td>" + flight.is_external + "</td></tr>");
+			});
+		});
+	</script>
+
+</body>
+</html>
