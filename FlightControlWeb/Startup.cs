@@ -46,6 +46,8 @@ namespace FlightControlWeb
             {
                 endpoints.MapControllers();
             });
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
         }
     }
 }
