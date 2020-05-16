@@ -6098,19 +6098,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Jenny\\.nuget\\packages\\": {}
+    "C:\\Users\\yaelb\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Jenny\\source\\repos\\FlightControl\\FlightControlWeb\\FlightControlWeb.csproj",
+      "projectUniqueName": "C:\\Users\\yaelb\\Source\\Repos\\JennyDavidov\\WebApplication\\FlightControlWeb\\FlightControlWeb.csproj",
       "projectName": "FlightControlWeb",
-      "projectPath": "C:\\Users\\Jenny\\source\\repos\\FlightControl\\FlightControlWeb\\FlightControlWeb.csproj",
-      "packagesPath": "C:\\Users\\Jenny\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Jenny\\source\\repos\\FlightControl\\FlightControlWeb\\obj\\",
+      "projectPath": "C:\\Users\\yaelb\\Source\\Repos\\JennyDavidov\\WebApplication\\FlightControlWeb\\FlightControlWeb.csproj",
+      "packagesPath": "C:\\Users\\yaelb\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\yaelb\\Source\\Repos\\JennyDavidov\\WebApplication\\FlightControlWeb\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Jenny\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\yaelb\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
