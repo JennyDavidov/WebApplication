@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FlightControlWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections;
 
 namespace FlightControlWeb.Controllers
 {
@@ -12,39 +13,76 @@ namespace FlightControlWeb.Controllers
     [ApiController]
     public class FlightsController : ControllerBase
     {
-        private IFlightsManager model = new MyFlightManagers();
+        private IFlightsManager Model = new MyFlightManagers();
+        private IPlanManager PlanModel = new MyPlanManager();
         // GET: api/Flights
         [HttpGet]
-        public IEnumerable<Flight> GetAllFlights()
+        public List<Flight> GetAllFlights()
         {
-            return model.GetAllFlights();
+            return Model.GetAllFlights();
         }
 
-        // GET: api/Flights/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
+        // GET: api/Flights/
+        //[HttpGet("{id}", Name = "Get")]
+        public Flight[] Get(string relative_to, string toSync)
         {
-            return "value";
+            List<Flight> returnList = new List<Flight>();
+            //if its the first GET request:
+            // return array of that: 1.external_is=false 2. Time is now
+            if (toSync == null)
+            {
+                DateTime parsedDate = DateTime.Parse(relative_to);
+                List<Flight> list = new List<Flight>();
+                list = Model.GetAllFlights();
+                foreach (Flight f in list)
+                {
+                    DateTime fDate = DateTime.Parse(f.Date_time);
+                    if (fDate == parsedDate)
+                    {
+                        if (f.Is_external == false)
+                        {
+                            returnList.Add(f);
+                        }
+                    }
+                }
+                Flight[] array = returnList.ToArray();
+                return array;
+            }
+            else
+            {
+                //Its the second GET request: ALL flights from this time
+                DateTime parsedDate = DateTime.Parse(relative_to);
+                List<Flight> list = new List<Flight>();
+                list = Model.GetAllFlights();
+                foreach (Flight f in list)
+                {
+                    DateTime fDate = DateTime.Parse(f.Date_time);
+                    if (fDate == parsedDate)
+                    {
+                        returnList.Add(f);
+                    }
+                }
+                Flight[] array = returnList.ToArray();
+                return array;
+            }
         }
-
         // POST: api/Flights
         [HttpPost]
         public Flight AddFlight(Flight f)
         {
-            model.AddFlight(f);
+            Model.AddFlight(f);
             return f;
         }
 
-        // PUT: api/Flights/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE: api/ApiWithActions/5
+        // DELETE: api/Flights
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public void Delete(string id)
         {
+            FlightPlan p;
+            if (PlanModel.GetDictionary().TryGetValue(id, out p))
+            {
+                PlanModel.GetDictionary().Remove(id);
+            }
         }
     }
 }

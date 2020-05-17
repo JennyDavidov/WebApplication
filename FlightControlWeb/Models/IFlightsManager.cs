@@ -8,9 +8,9 @@ namespace FlightControlWeb.Models
     interface IFlightsManager
     {
         //IEnumerable is interface of collections
-        IEnumerable<Flight> GetAllFlights();
+        List<Flight> GetAllFlights();
         void AddFlight(Flight f);
-        void DeleteFlight(int flight_id);
+        void DeleteFlight(string flight_id);
         void UpdateFlight(Flight f);
     }
 }
