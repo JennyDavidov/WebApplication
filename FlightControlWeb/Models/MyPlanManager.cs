@@ -9,17 +9,22 @@ namespace FlightControlWeb.Models
     public class MyPlanManager : IPlanManager
     {
         public static IDictionary<string, FlightPlan> IdToFPlan = new Dictionary<string, FlightPlan>();
-        private static List<FlightPlan> Plans = new List<FlightPlan>()
-        {
-            new FlightPlan()
-        }
+        IFlightsManager ModelFlight = new MyFlightManager();
+        private static List<FlightPlan> Plans = new List<FlightPlan>();
+        //{
+        //    new FlightPlan(126,"ElAl",new Initial_location(11.11,22.22,"2020-12-26T23:56:21Z"),new List<Segment> {
+        //        new Segment(33.33,44.44,650)}),
+        //     new FlightPlan(136,"ElAl2",new Initial_location(111.11,222.22,"2020-12-28T23:56:21Z"),new List<Segment> {
+        //        new Segment(39.33,49.44,550)})
+        //};
 
         public void AddPlan(FlightPlan p)
         {
             //generate ID:
             string id = GenerateId();
-            Flight flight = new Flight(id, p.Initial.Longitude, p.Initial.Latitude,
-                p.Passengers, p.Company_name, p.Initial.Date_time, p.Is_external);
+            Flight flight = new Flight(id, p.Initial_Location.Longitude, p.Initial_Location.Latitude,
+                p.Passenger, p.Company_name, p.Initial_Location.Date_time,false);
+            ModelFlight.AddFlight(flight);
             IdToFPlan.Add(id, p);
             Plans.Add(p);
         }

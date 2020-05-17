@@ -13,23 +13,30 @@ namespace FlightControlWeb.Controllers
     [ApiController]
     public class FlightsController : ControllerBase
     {
-        private IFlightsManager Model = new MyFlightManagers();
+        private IFlightsManager Model = new MyFlightManager();
         private IPlanManager PlanModel = new MyPlanManager();
-        // GET: api/Flights
-        [HttpGet]
-        public List<Flight> GetAllFlights()
-        {
-            return Model.GetAllFlights();
-        }
+        //// GET: api/Flights
+        //[HttpGet]
+        //public List<Flight> GetAllFlights()
+        //{
+        //    return Model.GetAllFlights();
+        //}
 
         // GET: api/Flights/
+        [HttpGet]
         //[HttpGet("{id}", Name = "Get")]
-        public Flight[] Get(string relative_to, string toSync)
+        public Flight[] Get(string relative_to)
         {
-            List<Flight> returnList = new List<Flight>();
+            bool sync_all = false;
+            string s = Request.QueryString.Value;
+            if (s.Contains("sync_all"))
+            {
+                sync_all = true;
+            }
+                List<Flight> returnList = new List<Flight>();
             //if its the first GET request:
             // return array of that: 1.external_is=false 2. Time is now
-            if (toSync == null)
+            if (!sync_all)
             {
                 DateTime parsedDate = DateTime.Parse(relative_to);
                 List<Flight> list = new List<Flight>();

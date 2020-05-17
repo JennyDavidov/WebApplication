@@ -38,6 +38,7 @@ namespace FlightControlWeb.Controllers
                 if (String.Equals(s.ServerId, id))
                 {
                     Model.DeleteServer(s);
+                    break;
                 }
             }
         }

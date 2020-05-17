@@ -14,12 +14,6 @@ namespace FlightControlWeb.Controllers
     {
         public IDictionary<string, FlightPlan> DictionaryPlan = new Dictionary<string, FlightPlan>();
         private IPlanManager PlanModel = new MyPlanManager();
-        // GET: api/FlightPlan
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
 
         // GET: api/FlightPlan/{id}
         [HttpGet("{id}", Name = "Get")]
