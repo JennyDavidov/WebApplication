@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,8 @@ namespace FlightControlWeb.Models
         public static IDictionary<string, FlightPlan> IdToFPlan = new Dictionary<string, FlightPlan>();
         IFlightsManager ModelFlight = new MyFlightManager();
         private static List<FlightPlan> Plans = new List<FlightPlan>();
+        //ConcurrentDictionary<string, FlightPlan> dictionary = new ConcurrentDictionary<string, string>();
+
         //{
         //    new FlightPlan(126,"ElAl",new Initial_location(11.11,22.22,"2020-12-26T23:56:21Z"),new List<Segment> {
         //        new Segment(33.33,44.44,650)}),
