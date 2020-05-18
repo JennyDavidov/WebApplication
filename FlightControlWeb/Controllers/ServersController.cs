@@ -36,6 +36,7 @@ namespace FlightControlWeb.Controllers
             foreach (Servers s in Model.GetAllServers())
             {
                 //search server by id
+                Console.WriteLine("hi");
                 if (String.Equals(s.ServerId, id))
                 {
                     Model.DeleteServer(s);
