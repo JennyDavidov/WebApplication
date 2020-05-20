@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FlightControlWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Concurrent;
 using System.Collections;
 
 namespace FlightControlWeb.Controllers
@@ -15,12 +16,6 @@ namespace FlightControlWeb.Controllers
     {
         private IFlightsManager Model = new MyFlightManager();
         private IPlanManager PlanModel = new MyPlanManager();
-        //// GET: api/Flights
-        //[HttpGet]
-        //public List<Flight> GetAllFlights()
-        //{
-        //    return Model.GetAllFlights();
-        //}
 
         // GET: api/Flights/
         [HttpGet]
@@ -33,22 +28,24 @@ namespace FlightControlWeb.Controllers
             {
                 sync_all = true;
             }
-                List<Flight> returnList = new List<Flight>();
+            List<Flight> returnList = new List<Flight>();
             //if its the first GET request:
             // return array of that: 1.external_is=false 2. Time is now
             if (!sync_all)
             {
                 DateTime parsedDate = DateTime.Parse(relative_to);
-                List<Flight> list = new List<Flight>();
-                list = Model.GetAllFlights();
-                foreach (Flight f in list)
+                parsedDate = TimeZoneInfo.ConvertTimeToUtc(parsedDate);
+                foreach (var f in Model.GetAllFlights())
                 {
-                    DateTime fDate = DateTime.Parse(f.Date_time);
-                    if (fDate == parsedDate)
+                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(f.Value.Date_time));
+                    DateTime endTime = CalcEndTime(startTime, f);
+                    int resultAfterStart = DateTime.Compare(parsedDate, startTime);
+                    int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
+                    if ((resultAfterStart>=0) && (resultBeforeEnd <=0))
                     {
-                        if (f.Is_external == false)
+                        if (f.Value.Is_external == false)
                         {
-                            returnList.Add(f);
+                            returnList.Add(f.Value);
                         }
                     }
                 }
@@ -59,14 +56,16 @@ namespace FlightControlWeb.Controllers
             {
                 //Its the second GET request: ALL flights from this time
                 DateTime parsedDate = DateTime.Parse(relative_to);
-                List<Flight> list = new List<Flight>();
-                list = Model.GetAllFlights();
-                foreach (Flight f in list)
+                parsedDate = TimeZoneInfo.ConvertTimeToUtc(parsedDate);
+                foreach (var f in Model.GetAllFlights())
                 {
-                    DateTime fDate = DateTime.Parse(f.Date_time);
-                    if (fDate == parsedDate)
+                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(f.Value.Date_time));
+                    DateTime endTime = CalcEndTime(startTime, f);
+                    int resultAfterStart = DateTime.Compare(parsedDate, startTime);
+                    int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
+                    if ((resultAfterStart >= 0) && (resultBeforeEnd <= 0))
                     {
-                        returnList.Add(f);
+                        returnList.Add(f.Value);
                     }
                 }
                 Flight[] array = returnList.ToArray();
@@ -86,10 +85,31 @@ namespace FlightControlWeb.Controllers
         public void Delete(string id)
         {
             FlightPlan p;
-            if (PlanModel.GetDictionary().TryGetValue(id, out p))
+            if (PlanModel.GetAllPlans().TryGetValue(id, out p))
             {
-                PlanModel.GetDictionary().Remove(id);
+                PlanModel.GetAllPlans().TryRemove(id, out p);
             }
+        }
+        public DateTime CalcEndTime(DateTime startTime, KeyValuePair<string, Flight> f)
+        {
+            DateTime fEndTime;
+            FlightPlan p;
+            double totalSeg = 0;
+            foreach (var plan in PlanModel.GetAllPlans())
+            {
+                //find the flight plan
+                if (string.Compare(plan.Key, f.Value.Flight_id, true) == 0)
+                {
+                    p = plan.Value;
+                    foreach (var seg in p.Segments)
+                    {
+                        totalSeg = totalSeg + seg.Timespan_seconds;
+                    }
+
+                }
+            }
+            fEndTime = startTime.AddSeconds(totalSeg);
+            return fEndTime;
         }
     }
 }

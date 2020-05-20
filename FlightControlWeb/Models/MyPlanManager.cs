@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,15 +9,8 @@ namespace FlightControlWeb.Models
 {
     public class MyPlanManager : IPlanManager
     {
-        public static IDictionary<string, FlightPlan> IdToFPlan = new Dictionary<string, FlightPlan>();
         IFlightsManager ModelFlight = new MyFlightManager();
-        private static List<FlightPlan> Plans = new List<FlightPlan>();
-        //{
-        //    new FlightPlan(126,"ElAl",new Initial_location(11.11,22.22,"2020-12-26T23:56:21Z"),new List<Segment> {
-        //        new Segment(33.33,44.44,650)}),
-        //     new FlightPlan(136,"ElAl2",new Initial_location(111.11,222.22,"2020-12-28T23:56:21Z"),new List<Segment> {
-        //        new Segment(39.33,49.44,550)})
-        //};
+        public static ConcurrentDictionary<string, FlightPlan> CachePlans = new ConcurrentDictionary<string, FlightPlan>();
 
         public void AddPlan(FlightPlan p)
         {
@@ -25,32 +19,33 @@ namespace FlightControlWeb.Models
             Flight flight = new Flight(id, p.Initial_Location.Longitude, p.Initial_Location.Latitude,
                 p.Passenger, p.Company_name, p.Initial_Location.Date_time,false);
             ModelFlight.AddFlight(flight);
-            IdToFPlan.Add(id, p);
-            Plans.Add(p);
+            if(!CachePlans.TryAdd(id, p))
+            {
+                Console.WriteLine("Error adding item to cache");
+            }
+            Console.WriteLine("add plan succeeded");
         }
 
         public void DeletePlan(FlightPlan p)
         {
-            string foundKey = IdToFPlan.FirstOrDefault(x => x.Value == p).Key;
-            if (foundKey == null)
+            string key = CachePlans.FirstOrDefault(x => x.Value == p).Key;
+            if (key == null)
             {
                 throw new Exception("Flight Plan not found");
             }
             else
             {
-                IdToFPlan.Remove(foundKey);
+                if (!CachePlans.TryRemove(key, out p))
+                {
+                    Console.WriteLine("Error removing item to cache");
+                }
             }
         }
 
-        public IEnumerable<FlightPlan> GetAllPlans()
+        public ConcurrentDictionary<string, FlightPlan> GetAllPlans()
         {
-            return Plans;
+            return CachePlans;
         }
-        public IDictionary<string, FlightPlan> GetDictionary()
-        {
-            return IdToFPlan;
-        }
-
         public string GenerateId()
         {
             Random rnd = new Random();

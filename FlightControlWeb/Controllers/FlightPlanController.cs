@@ -12,15 +12,13 @@ namespace FlightControlWeb.Controllers
     [ApiController]
     public class FlightPlanController : ControllerBase
     {
-        public IDictionary<string, FlightPlan> DictionaryPlan = new Dictionary<string, FlightPlan>();
         private IPlanManager PlanModel = new MyPlanManager();
 
         // GET: api/FlightPlan/{id}
         [HttpGet("{id}", Name = "Get")]
         public FlightPlan Get(string id)
         {
-            DictionaryPlan = PlanModel.GetDictionary();
-            FlightPlan p = DictionaryPlan.FirstOrDefault(t => t.Key == id).Value;
+            FlightPlan p = PlanModel.GetAllPlans().FirstOrDefault(t => string.Compare(t.Key,id,true)==0).Value;
             return p;
         }
         // POST: api/FlightPlan
