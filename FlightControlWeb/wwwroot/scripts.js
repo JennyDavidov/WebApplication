@@ -4,7 +4,19 @@ input.addEventListener('change', function (e) {
     console.log(input.files);
     const reader = new FileReader();
     reader.onload = function () {
-        console.log(reader.result);
+        $.ajax({
+            url: "https://localhost:44389/api/FlightPlan",
+            type: "POST",
+            contentType: "application/json",
+            dataType: "json",
+            data: reader.result,
+            success: function (data) {
+                console.log(reader.result);
+            },
+            error: function (response) {
+                //console.log("error");
+            },
+        });
     }
     if (input.files[0].type === "application/json") {
         reader.readAsText(input.files[0]);
