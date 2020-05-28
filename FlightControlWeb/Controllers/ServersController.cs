@@ -21,6 +21,7 @@ namespace FlightControlWeb.Controllers
             return Model.GetAllServers();
         }
 
+
         // POST: api/Servers
         [HttpPost]
         public Servers Post(Servers s)
