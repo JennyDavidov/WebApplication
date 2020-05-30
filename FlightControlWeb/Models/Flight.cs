@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace FlightControlWeb.Models
+namespace FlightControl.Models
 {
     public class Flight
     {
@@ -35,7 +35,9 @@ namespace FlightControlWeb.Models
         [JsonPropertyName("is_external")]
         public bool Is_external { get; set; }
 
-        
+        public string EndTime { get; set; }
+
+
 
         public Flight(string Flight_id1, double Longitude1, double Latitude1,
             int Passengers1, string Company_name1, string Date_time1, bool Is_external1)

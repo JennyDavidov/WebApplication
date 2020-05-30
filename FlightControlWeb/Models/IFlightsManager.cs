@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
 
-namespace FlightControlWeb.Models
+namespace FlightControl.Models
 {
     interface IFlightsManager
     {

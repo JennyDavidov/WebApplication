@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FlightControlWeb.Models;
+using FlightControl.Models;
 using System.Net.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,8 +10,9 @@ using System.Collections.Concurrent;
 using System.Collections;
 using System.Text.Json;
 using Newtonsoft.Json;
+using System.Net;
 
-namespace FlightControlWeb.Controllers
+namespace FlightControl.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -20,11 +21,17 @@ namespace FlightControlWeb.Controllers
         private IFlightsManager Model = new MyFlightManager();
         private IPlanManager PlanModel = new MyPlanManager();
         private IServersManager ServerModel = new MyServersManager();
+        private HttpClient client;
+
+        public FlightsController(IHttpClientFactory client1)
+        {
+            this.client = client1.CreateClient();
+        }
 
         // GET: api/Flights/
         [HttpGet]
         //[HttpGet("{id}", Name = "Get")]
-        public async Task<Flight[]> Get(string relative_to)
+        public async Task<ActionResult<Flight[]>> Get(string relative_to)
         {
             bool sync_all = false;
             string s = Request.QueryString.Value;
@@ -41,8 +48,15 @@ namespace FlightControlWeb.Controllers
                 parsedDate = TimeZoneInfo.ConvertTimeToUtc(parsedDate);
                 foreach (var f in Model.GetAllFlights())
                 {
-                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(f.Value.Date_time));
+                    FlightPlan p;
+                    PlanModel.GetAllPlans().TryGetValue(f.Value.Flight_id, out p);
+                    //find the start time as appear in the initial time in the flight plan
+                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.Initial_Location.Date_time));
+                    //update current location of flight
+                    CurrentFlightLocation(startTime, parsedDate, p, f.Value);
                     DateTime endTime = CalcEndTime(startTime, f.Value);
+                    //update end time of flight
+                    f.Value.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
                     int resultAfterStart = DateTime.Compare(parsedDate, startTime);
                     int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
                     if ((resultAfterStart>=0) && (resultBeforeEnd <=0))
@@ -64,8 +78,15 @@ namespace FlightControlWeb.Controllers
                 parsedDate = TimeZoneInfo.ConvertTimeToUtc(parsedDate);
                 foreach (var f in Model.GetAllFlights())
                 {
-                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(f.Value.Date_time));
+                    FlightPlan p;
+                    PlanModel.GetAllPlans().TryGetValue(f.Value.Flight_id, out p);
+                    //find the start time as appear in the initial time in the flight plan
+                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.Initial_Location.Date_time));
+                    //update current location of flight
+                    CurrentFlightLocation(startTime, parsedDate, p, f.Value);
                     DateTime endTime = CalcEndTime(startTime, f.Value);
+                    //update end time of flight
+                    f.Value.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
                     int resultAfterStart = DateTime.Compare(parsedDate, startTime);
                     int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
                     if ((resultAfterStart >= 0) && (resultBeforeEnd <= 0))
@@ -76,26 +97,40 @@ namespace FlightControlWeb.Controllers
                 //second part - get all exnternal flights (flights source: other servers)
                 foreach (var server in ServerModel.GetAllServers())
                 {
-                    using var client = new HttpClient();
-                    string url = server.ServerURL + "/api/Flights?relative_to=" + relative_to;
-                    var contentt = await client.GetStringAsync(url);
-                    List<Flight> flightsFromServer = JsonConvert.DeserializeObject<List<Flight>>(contentt);
-                    foreach (var externalFlight in flightsFromServer)
+                    try
                     {
-                        DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(externalFlight.Date_time));
-                        DateTime endTime = CalcEndTime(startTime, externalFlight);
-                        int resultAfterStart = DateTime.Compare(parsedDate, startTime);
-                        int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
-                        if ((resultAfterStart >= 0) && (resultBeforeEnd <= 0))
+                        string url = server.Value.ServerURL + "/api/Flights?relative_to=" + relative_to;
+                        var contentt = await this.client.GetStringAsync(url);
+                        List<Flight> flightsFromServer = JsonConvert.DeserializeObject<List<Flight>>(contentt);
+                        foreach (var externalFlight in flightsFromServer)
                         {
-                            returnList.Add(externalFlight);
+                            DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(externalFlight.Date_time));
+                            DateTime endTime = CalcEndTime(startTime, externalFlight);
+                            int resultAfterStart = DateTime.Compare(parsedDate, startTime);
+                            int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
+                            if ((resultAfterStart >= 0) && (resultBeforeEnd <= 0))
+                            {
+                                returnList.Add(externalFlight);
+                            }
                         }
+                    }
+                    catch (WebException e)
+                    {
+                         return BadRequest();
+                    }
+                    catch (Exception e)
+                    {
+                        return StatusCode(500);
+
                     }
                 }
                 Flight[] array = returnList.ToArray();
                 return array;
             }
         }
+
+       
+
         // POST: api/Flights
         [HttpPost]
         public Flight AddFlight(Flight f)
@@ -112,8 +147,11 @@ namespace FlightControlWeb.Controllers
             if (PlanModel.GetAllPlans().TryGetValue(id, out p))
             {
                 PlanModel.GetAllPlans().TryRemove(id, out p);
+                Model.DeleteFlight(id);
             }
         }
+
+
         public DateTime CalcEndTime(DateTime startTime, Flight f)
         {
             DateTime fEndTime;
@@ -135,5 +173,40 @@ namespace FlightControlWeb.Controllers
             fEndTime = startTime.AddSeconds(totalSeg);
             return fEndTime;
         }
+
+        public void CurrentFlightLocation(DateTime startTime, DateTime relativeTo, FlightPlan p, Flight f)
+        {
+            int i;
+            TimeSpan timeSpan = relativeTo - startTime;
+            double diff = timeSpan.TotalSeconds;
+            //if its in the first segment
+            if(p.Segments[0].Timespan_seconds >= diff)
+            {
+                double percentage = (diff / p.Segments[0].Timespan_seconds) * 100;
+                //calc: (end value-start value)* percentage
+                f.Latitude = p.Initial_Location.Latitude + (p.Segments[0].Latitude- p.Initial_Location.Latitude) * percentage;
+                f.Longitude = p.Initial_Location.Longitude + (p.Segments[0].Longitude - p.Initial_Location.Longitude) * percentage;
+            }
+            else
+            {
+                diff = diff - p.Segments[0].Timespan_seconds;
+                for(i=1; i < p.Segments.Count; i++)
+                {
+                    if (p.Segments[i].Timespan_seconds >= diff)
+                    {
+                        double percentage = (diff / p.Segments[i].Timespan_seconds) * 100;
+                        //calc: (end value-start value)* percentage
+                        f.Latitude = p.Segments[i - 1].Latitude + (p.Segments[i].Latitude - p.Segments[i-1].Latitude) * percentage;
+                        f.Longitude = p.Segments[i - 1].Longitude + (p.Segments[i].Longitude - p.Segments[i-1].Longitude) * percentage;
+                        break;
+                    }
+                    else
+                    {
+                        diff = diff - p.Segments[i].Timespan_seconds;
+                    }
+                }
+            } 
+        }
+
     }
 }

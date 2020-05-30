@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using FlightControlWeb.Models;
+using FlightControl.Models;
+using System.Collections.Concurrent;
 
-
-namespace FlightControlWeb.Controllers
+namespace FlightControl.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -16,7 +16,7 @@ namespace FlightControlWeb.Controllers
         private IServersManager Model = new MyServersManager();
         // GET: api/Servers
         [HttpGet]
-        public IEnumerable<Servers> Get()
+        public ConcurrentDictionary<string, Servers> Get()
         {
             return Model.GetAllServers();
         }
@@ -34,15 +34,10 @@ namespace FlightControlWeb.Controllers
         [HttpDelete("{id}")]
         public void Delete(string id)
         {
-            foreach (Servers s in Model.GetAllServers())
+            Servers p;
+            if (Model.GetAllServers().TryGetValue(id, out p))
             {
-                //search server by id
-                Console.WriteLine("hi");
-                if (String.Equals(s.ServerId, id))
-                {
-                    Model.DeleteServer(s);
-                    break;
-                }
+                Model.GetAllServers().TryRemove(id, out p);
             }
         }
     }

@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FlightControlWeb.Models
+namespace FlightControl.Models
 {
     interface IServersManager
     {
-        IEnumerable<Servers> GetAllServers();
+        ConcurrentDictionary<string, Servers> GetAllServers();
         void AddServer(Servers f);
         void DeleteServer(Servers p);
     }

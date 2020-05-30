@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FlightControlWeb.Models
+namespace FlightControl.Models
 {
     public class MyPlanManager : IPlanManager
     {

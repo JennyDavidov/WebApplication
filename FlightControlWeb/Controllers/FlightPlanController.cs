@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FlightControlWeb.Models;
+using FlightControl.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FlightControlWeb.Controllers
+namespace FlightControl.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
