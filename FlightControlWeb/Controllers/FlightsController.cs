@@ -202,7 +202,7 @@ namespace FlightControl.Controllers
                     }
                     else
                     {
-                        diff = diff - p.Segments[i].Timespan_seconds;
+                        diff -= p.Segments[i].Timespan_seconds;
                     }
                 }
             } 
