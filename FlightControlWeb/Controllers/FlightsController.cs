@@ -80,7 +80,7 @@ namespace FlightControlWeb.Controllers
             return f;
         }
 
-        // DELETE: api/Flights
+        // DELETE: api/Flights/id
         [HttpDelete("{id}")]
         public void Delete(string id)
         {
@@ -88,6 +88,7 @@ namespace FlightControlWeb.Controllers
             if (PlanModel.GetAllPlans().TryGetValue(id, out p))
             {
                 PlanModel.GetAllPlans().TryRemove(id, out p);
+                Model.DeleteFlight(id);
             }
         }
         public DateTime CalcEndTime(DateTime startTime, KeyValuePair<string, Flight> f)
