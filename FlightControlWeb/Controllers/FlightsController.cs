@@ -53,7 +53,7 @@ namespace FlightControl.Controllers
                     //find the start time as appear in the initial time in the flight plan
                     DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.Initial_Location.Date_time));
                     //update current location of flight
-                    CurrentFlightLocation(startTime, parsedDate, p, f.Value);
+                    CurrentFlightLocation(startTime, parsedDate, f.Value);
                     DateTime endTime = CalcEndTime(startTime, f.Value);
                     //update end time of flight
                     f.Value.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -83,7 +83,7 @@ namespace FlightControl.Controllers
                     //find the start time as appear in the initial time in the flight plan
                     DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.Initial_Location.Date_time));
                     //update current location of flight
-                    CurrentFlightLocation(startTime, parsedDate, p, f.Value);
+                    CurrentFlightLocation(startTime, parsedDate,f.Value);
                     DateTime endTime = CalcEndTime(startTime, f.Value);
                     //update end time of flight
                     f.Value.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -174,8 +174,10 @@ namespace FlightControl.Controllers
             return fEndTime;
         }
 
-        public void CurrentFlightLocation(DateTime startTime, DateTime relativeTo, FlightPlan p, Flight f)
+        public void CurrentFlightLocation(DateTime startTime, DateTime relativeTo, Flight f)
         {
+            FlightPlan p;
+            PlanModel.GetAllPlans().TryGetValue(f.Flight_id, out p);
             int i;
             TimeSpan timeSpan = relativeTo - startTime;
             double diff = timeSpan.TotalSeconds;
