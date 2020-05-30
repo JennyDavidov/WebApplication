@@ -139,7 +139,7 @@ namespace FlightControl.Controllers
             return f;
         }
 
-        // DELETE: api/Flights
+        // DELETE: api/Flights/id
         [HttpDelete("{id}")]
         public void Delete(string id)
         {
