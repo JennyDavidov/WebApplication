@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FlightControlWeb.Models
+namespace FlightControl.Models
 {
     public class MyPlanManager : IPlanManager
     {
@@ -17,7 +17,7 @@ namespace FlightControlWeb.Models
             //generate ID:
             string id = GenerateId();
             Flight flight = new Flight(id, p.Initial_Location.Longitude, p.Initial_Location.Latitude,
-                p.Passenger, p.Company_name, p.Initial_Location.Date_time,false);
+                p.Passengers, p.Company_name, p.Initial_Location.Date_time,false);
             ModelFlight.AddFlight(flight);
             if(!CachePlans.TryAdd(id, p))
             {

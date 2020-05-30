@@ -5,8 +5,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="bin\Debug\netcoreapp3.1\ru\pt-BR\**" />
+    <Content Remove="bin\Debug\netcoreapp3.1\ru\pt-BR\**" />
+    <EmbeddedResource Remove="bin\Debug\netcoreapp3.1\ru\pt-BR\**" />
+    <None Remove="bin\Debug\netcoreapp3.1\ru\pt-BR\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="jquery" Version="3.5.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>

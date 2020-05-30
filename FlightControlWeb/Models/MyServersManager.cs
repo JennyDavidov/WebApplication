@@ -1,26 +1,44 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FlightControlWeb.Models
+namespace FlightControl.Models
 {
     public class MyServersManager : IServersManager
     {
-        private static List<Servers> ServersList = new List<Servers>();
+        //private static List<Servers> ServersList = new List<Servers>();
+        public static ConcurrentDictionary<string, Servers> CacheServers = new ConcurrentDictionary<string, Servers>();
+
         public void AddServer(Servers s)
         {
-            ServersList.Add(s);
+            if (!CacheServers.TryAdd(s.ServerId,s))
+            {
+                Console.WriteLine("Error adding item to cache");
+            }
+            Console.WriteLine("add plan succeeded");
         }
 
         public void DeleteServer(Servers s)
         {
-            ServersList.Remove(s);
+            string key = CacheServers.FirstOrDefault(x => x.Value == s).Key;
+            if (key == null)
+            {
+                throw new Exception("Server Plan not found");
+            }
+            else
+            {
+                if (!CacheServers.TryRemove(key, out s))
+                {
+                    Console.WriteLine("Error removing item from cache");
+                }
+            }
         }
 
-        public IEnumerable<Servers> GetAllServers()
+        public ConcurrentDictionary<string, Servers> GetAllServers()
         {
-            return ServersList;
+            return CacheServers;
         }
     }
 }
