@@ -1,5 +1,7 @@
-//array flights
+//array my flights
 const flights = new Array();
+//array other flights
+const otherFlights = new Array();
 //configuring map and marker icon
 var mymap = L.map('mapid').setView([51.505, -0.09], 2);
 L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -16,9 +18,14 @@ var bluePlane = new MarkerIcon({ iconUrl: 'images/airplane1.png' }),
 var markers = new Array();
 var counter = 0;
 var paths = new Array();
+var otherMarkers = new Array();
+var otherCounter = 0;
+var otherPaths = new Array();
 var previousPath = -1;
 var previousRow = null;
 var table;
+var otherPreviousPath = -1;
+var otherPreviousRow = null;
 //ajax post request for adding new flight plan
 const input = document.querySelector('input[type="file"]');
 input.addEventListener('change', function (e) {
@@ -50,6 +57,17 @@ function onMarkerClick(e) {
             id = markers[i].options.customId;
             clickLogic(id);
             previousPath = i;
+            return;
+        }
+    }
+    for (var i = 0; i < otherCounter; i++) {
+        var local = otherMarkers[i].getLatLng().toString().localeCompare(e.latlng.toString());
+        //if the click was in plane in index i, execute click logic on him
+        if (local === 0) {
+            id = otherMarkers[i].options.customId;
+            otherClickLogic(id);
+            otherPreviousPath = i;
+            return
         }
     }
 }
@@ -65,6 +83,13 @@ function addRowHandlers(counter) {
         e.stopPropagation();
     });
 }
+//adding event handlers of clicking row for new row in table otherFlights
+function addOtherRowHandlers(counter) {
+    var tr = "#o" + counter;
+    $(document).on("click", tr, function () {
+        otherRowClick($(this));
+    });
+}
 //cancel event handlers of row in table
 function cancelRowHandlers(idRow) {
     var tr = "#" + idRow;
@@ -72,14 +97,22 @@ function cancelRowHandlers(idRow) {
     $(document).off("click", tr);
     $(document).off("click", del);
 }
-//clicking row in table
+//clicking row in table myFlights
 function onRowClick(e) {
     table = document.getElementById('myFlights');
     var trid = e.attr('id');
     var id = table.rows[trid].cells[1].innerHTML
-    console.log("onRow" + id);
     clickLogic(id);
     previousPath = trid;
+}
+//clicking row in table otherFlights
+function otherRowClick(e) {
+    table = document.getElementById('otherFlights');
+    var string = e.attr('id').toString();
+    var trid = string.substr(1, 1);
+    var id = table.rows[trid].cells[1].innerHTML
+    otherClickLogic(id);
+    otherPreviousPath = trid;
 }
 //click logic when clicking marker or row; showing path, change plane color, show flight details
 function clickLogic(id) {
@@ -97,14 +130,15 @@ function clickLogic(id) {
         if (markers[i].options.customId === id) {
             $("#flightDetails").html("");
             markers[i].setIcon(bluePlane);
+            var end = flights[i].endTime;
             var flightUrl = "../api/FlightPlan/" + id;
             $.getJSON(flightUrl).done(function (data) {
                 var lastSegm = data.segments.length - 1;
                 $("#flightDetails").html("<tr><td>" + id + "</td>" +
-                    "<td>" + data.passenger + "</td>" + "<td>" + data.company_name + "</td>" +
+                    "<td>" + data.company_name + "</td>" + "<td>" + data.passengers + "</td>" +
                     "<td>" + data.initial_Location.date_time + "</td>" +
                     "<td>{" + data.initial_Location.latitude + "," + data.initial_Location.longitude + "}</td>" +
-                    "<td>" + data.initial_Location.date_time + "</td>" +
+                    "<td>" + end + "</td>" +
                     "<td>{" + data.segments[lastSegm].latitude + "," + data.segments[lastSegm].longitude + "}</td>" +
                     "</tr>");
             });
@@ -119,6 +153,45 @@ function clickLogic(id) {
         }
     }
 }
+//click logic when clicking marker or row; showing path, change plane color, show flight details
+function otherClickLogic(id) {
+    table = document.getElementById('otherFlights');
+    var numRows = table.rows.length;
+    for (var index = 0; index < otherCounter; index++) {
+        if (index == otherPreviousPath) {
+            otherMarkers[index].setIcon(blackPlane);
+            document.getElementById("flightDetails").innerHTML = "";
+            mymap.removeLayer(otherPaths[index]);
+            table.rows[otherPreviousRow].style.backgroundColor = "white";
+        }
+    }
+    for (var i = 0; i < counter; i++) {
+        if (otherMarkers[i].options.customId === id) {
+            $("#flightDetails").html("");
+            otherMarkers[i].setIcon(bluePlane);
+            var end = otherFlights[i].endTime;
+            var flightUrl = "../api/FlightPlan/" + id;
+            $.getJSON(flightUrl).done(function (data) {
+                var lastSegm = data.segments.length - 1;
+                $("#flightDetails").html("<tr><td>" + id + "</td>" +
+                    "<td>" + data.company_name + "</td>" + "<td>" + data.passengers + "</td>" +
+                    "<td>" + data.initial_Location.date_time + "</td>" +
+                    "<td>{" + data.initial_Location.latitude + "," + data.initial_Location.longitude + "}</td>" +
+                    "<td>" + end + "</td>" +
+                    "<td>{" + data.segments[lastSegm].latitude + "," + data.segments[lastSegm].longitude + "}</td>" +
+                    "</tr>");
+            });
+            otherPaths[i].addTo(mymap);
+            for (var ind = 0; ind < numRows; ind++) {
+                var row = table.rows[ind];
+                if (row.cells[1].innerHTML === id) {
+                    row.style.backgroundColor = "LightSkyBlue";
+                    otherPreviousRow = ind;
+                }
+            }
+        }
+    }
+}
 //clicking the map logic
 function onMapClick() {
     $("#flightDetails").html("");
@@ -126,7 +199,17 @@ function onMapClick() {
         markers[index].setIcon(blackPlane);
         mymap.removeLayer(paths[index])
     }
+    for (var index = 0; index < otherCounter; index++) {
+        otherMarkers[index].setIcon(blackPlane);
+        mymap.removeLayer(otherPaths[index])
+    }
     table = document.getElementById('myFlights');
+    var numRows = table.rows.length;
+    for (var ind = 0; ind < numRows; ind++) {
+        var row = table.rows[ind];
+        row.style.backgroundColor = "white";
+    }
+    table = document.getElementById('otherFlights');
     var numRows = table.rows.length;
     for (var ind = 0; ind < numRows; ind++) {
         var row = table.rows[ind];
@@ -139,14 +222,12 @@ function deleteRow(e) {
     table = document.getElementById('myFlights');
     var string = e.attr('id').toString();
     var trid = string.substr(3,1);
-    console.log("tr id: " + trid);
     var id = table.rows[trid].cells[1].innerHTML
     $(document).off("click", e);
     $.ajax({
         url: "https://localhost:44389/api/Flights/" + id,
         type: "DELETE",
         success: function (data) {
-            console.log("deleted" + data);
             cancelRowHandlers(table.rows.length - 1);
             table.rows[trid].remove();
             mymap.removeLayer(markers[trid]);
@@ -175,17 +256,17 @@ function deleteRow(e) {
     });
 }
 //updating flights according the moment
-function yourFunction() {
-    setTimeout(yourFunction, 2000);
+function updatingMyTable() {
+    setTimeout(updatingMyTable, 2000);
     var date = new Date();
     var now_utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
         date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
     var flightUrl1 = "../api/Flights?relative_to=" + new Date(now_utc).toISOString();
-    $.getJSON(flightUrl1, function (data) {
+    $.getJSON(flightUrl1).done(function (data) {
         data.forEach(function (flight) {
             const found = flights.some(el => el.id === flight.flight_id);
             if (!found) {
-                flights.push({ id: flight.flight_id, company: flight.company_name });
+                flights.push({ id: flight.flight_id, company: flight.company_name, endTime: flight.endTime });
                 markers.push(L.marker([flight.latitude, flight.longitude],
                     { customId: flight.flight_id, icon: blackPlane }));
                 markers[counter].addTo(mymap);
@@ -215,8 +296,61 @@ function yourFunction() {
                     + "<td>" + flight.flight_id + "</td>" +
                     "<td>" + flight.company_name + "</td></tr>");
                 addRowHandlers(counter);
+                Toastify({
+                    text: "Flight added",
+                    duration: 3000,
+                    position: 'center',
+                    backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+                }).showToast();
             }
         });
     });
 }
-yourFunction();
+function updatingOtherTable() {
+    setTimeout(updatingOtherTable, 2000);
+    var date = new Date();
+    var now_utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
+        date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+    var flightUrl1 = "../api/Flights?relative_to=" + new Date(now_utc).toISOString() + "&sync_all";
+    $.getJSON(flightUrl1).done(function (data) {
+        data.forEach(function (flight) {
+            if (flight.is_external) {
+                const found = otherFlights.some(el => el.id === flight.flight_id);
+                if (!found) {
+                    otherFlights.push({ id: flight.flight_id, company: flight.company_name, endTime: flight.endTime });
+                    otherMarkers.push(L.marker([flight.latitude, flight.longitude],
+                        { customId: flight.flight_id, icon: blackPlane }));
+                    markers[otherCounter].addTo(mymap);
+                    markers[otherCounter].on('click', onMarkerClick);
+                    var flightUrl = "../api/FlightPlan/" + flight.flight_id;
+                    var latlngs = new Array();
+                    $.getJSON(flightUrl).done(function (data) {
+                        latlngs.push([data.initial_Location.latitude, data.initial_Location.longitude]);
+                        for (var j = 0; j < data.segments.length; j++) {
+                            latlngs.push([data.segments[j].latitude, data.segments[j].longitude]);
+                        }
+                        otherPaths.push(L.polyline(latlngs, { color: 'blue' }));
+                        otherCounter++;
+                    });
+                }
+                else {
+                    for (var i = 0; i < otherCounter; i++) {
+                        if (otherFlights[i].id === flight.flight_id) {
+                            otherMarkers[i].setLatLng([flight.latitude, flight.longitude]);
+                        }
+                    }
+                }
+
+                var content = $("#otherFlights").html();
+                if (!content.includes(flight.flight_id)) {
+                    $("#otherFlights").append("<tr id=o" + otherCounter + "><td></td>"
+                        + "<td>" + flight.flight_id + "</td>" +
+                        "<td>" + flight.company_name + "</td></tr>");
+                    addOtherRowHandlers(otherCounter);
+                }
+            }
+        });
+    });
+}
+updatingMyTable();
+updatingOtherTable();

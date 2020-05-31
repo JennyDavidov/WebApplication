@@ -10,13 +10,14 @@
 	<link href="css/bootstrap.min.css" rel="stylesheet">
 	<link href="css/style.css" rel="stylesheet">
 	<link rel="stylesheet" href="leaflet.css">
+	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 	<style>
-        tbody {
-            display: block;
-            max-height: 280px;
-            overflow-y: auto;
-            cursor: pointer;
-        }
+		tbody {
+			display: block;
+			max-height: 280px;
+			overflow-y: auto;
+			cursor: pointer;
+		}
 
 			thead, tbody tr {
 				display: table;
@@ -36,6 +37,7 @@
 			</div>
 			<div class="col-md-4">
 				<div>
+					<header style="font-size:20px">Internal flights</header>
 					<table class="table table-sm table-bordered">
 						<thead>
 							<tr>
@@ -50,7 +52,7 @@
 				</div>
 				<div>
 					<input type="file" id="real-file" hidden="hidden" />
-					<button type="button" id="custom-button">choose file</button>
+					<button type="button" id="custom-button">Add flight</button>
 				</div>
 			</div>
 		</div>
@@ -80,7 +82,8 @@
 				</dl>
 			</div>
 			<div class="col-md-4">
-				<table id="otherFlights" class="table table-sm table-bordered">
+				<header style="font-size:20px">External flights</header>
+				<table class="table table-sm table-bordered">
 					<thead>
 						<tr>
 							<th>#</th>
@@ -88,7 +91,7 @@
 							<th>Company name</th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody id="otherFlights">
 					</tbody>
 				</table>
 			</div>
@@ -97,6 +100,7 @@
 	<script src="js/jquery.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
 	<script type="module" src="scripts.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 	<script type="text/javascript">
 		const realFile = document.getElementById("real-file");
 		const customBtn = document.getElementById("custom-button");

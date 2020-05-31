@@ -187,7 +187,7 @@ namespace FlightControl.Controllers
             //if its in the first segment
             if(p.Segments[0].Timespan_seconds >= diff)
             {
-                double percentage = (diff / p.Segments[0].Timespan_seconds) * 100;
+                double percentage = (diff / p.Segments[0].Timespan_seconds);
                 //calc: (end value-start value)* percentage
                 f.Latitude = p.Initial_Location.Latitude + (p.Segments[0].Latitude- p.Initial_Location.Latitude) * percentage;
                 f.Longitude = p.Initial_Location.Longitude + (p.Segments[0].Longitude - p.Initial_Location.Longitude) * percentage;
@@ -199,7 +199,7 @@ namespace FlightControl.Controllers
                 {
                     if (p.Segments[i].Timespan_seconds >= diff)
                     {
-                        double percentage = (diff / p.Segments[i].Timespan_seconds) * 100;
+                        double percentage = (diff / p.Segments[i].Timespan_seconds);
                         //calc: (end value-start value)* percentage
                         f.Latitude = p.Segments[i - 1].Latitude + (p.Segments[i].Latitude - p.Segments[i-1].Latitude) * percentage;
                         f.Longitude = p.Segments[i - 1].Longitude + (p.Segments[i].Longitude - p.Segments[i-1].Longitude) * percentage;
