@@ -13,7 +13,7 @@ namespace FlightControl.Models
 
         public void AddFlight(Flight f)
         {
-            if (!CacheFlights.TryAdd(index.ToString(), f))
+            if (!CacheFlights.TryAdd(f.Flight_id, f))
             {
                 Console.WriteLine("Error adding item to cache");
             }

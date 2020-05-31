@@ -8,8 +8,8 @@ namespace FlightControl.Models
 {
     public class MyServersManager : IServersManager
     {
-        //private static List<Servers> ServersList = new List<Servers>();
         public static ConcurrentDictionary<string, Servers> CacheServers = new ConcurrentDictionary<string, Servers>();
+        public static ConcurrentDictionary<string, Servers> ServerToFlightDic= new ConcurrentDictionary<string, Servers>();
 
         public void AddServer(Servers s)
         {
@@ -39,6 +39,11 @@ namespace FlightControl.Models
         public ConcurrentDictionary<string, Servers> GetAllServers()
         {
             return CacheServers;
+        }
+
+        public ConcurrentDictionary<string, Servers> GetServerToFlightDic()
+        {
+            return ServerToFlightDic;
         }
     }
 }

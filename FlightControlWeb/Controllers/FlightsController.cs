@@ -104,6 +104,9 @@ namespace FlightControl.Controllers
                         List<Flight> flightsFromServer = JsonConvert.DeserializeObject<List<Flight>>(contentt);
                         foreach (var externalFlight in flightsFromServer)
                         {
+                            ServerModel.GetServerToFlightDic().AddOrUpdate(externalFlight.Flight_id, server.Value,(oldKey,oldVal) => server.Value);
+                            externalFlight.Is_external = true;
+
                             DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(externalFlight.Date_time));
                             DateTime endTime = CalcEndTime(startTime, externalFlight);
                             int resultAfterStart = DateTime.Compare(parsedDate, startTime);

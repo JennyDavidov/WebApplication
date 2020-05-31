@@ -11,5 +11,6 @@ namespace FlightControl.Models
         ConcurrentDictionary<string, Servers> GetAllServers();
         void AddServer(Servers f);
         void DeleteServer(Servers p);
+        public ConcurrentDictionary<string, Servers> GetServerToFlightDic();
     }
 }
