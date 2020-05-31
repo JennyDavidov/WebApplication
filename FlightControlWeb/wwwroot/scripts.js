@@ -22,10 +22,10 @@ var otherMarkers = new Array();
 var otherCounter = 0;
 var otherPaths = new Array();
 var previousPath = -1;
-var previousRow = null;
+var previousRow = -1;
 var table;
 var otherPreviousPath = -1;
-var otherPreviousRow = null;
+var otherPreviousRow = -1;
 //ajax post request for adding new flight plan
 const input = document.querySelector('input[type="file"]');
 input.addEventListener('change', function (e) {
@@ -57,6 +57,7 @@ function onMarkerClick(e) {
             id = markers[i].options.customId;
             clickLogic(id);
             previousPath = i;
+            previousRow = i;
             return;
         }
     }
@@ -67,7 +68,8 @@ function onMarkerClick(e) {
             id = otherMarkers[i].options.customId;
             otherClickLogic(id);
             otherPreviousPath = i;
-            return
+            otherPreviousRow = i;
+            return;
         }
     }
 }
@@ -104,6 +106,7 @@ function onRowClick(e) {
     var id = table.rows[trid].cells[1].innerHTML
     clickLogic(id);
     previousPath = trid;
+    previousRow = trid;
 }
 //clicking row in table otherFlights
 function otherRowClick(e) {
@@ -113,6 +116,7 @@ function otherRowClick(e) {
     var id = table.rows[trid].cells[1].innerHTML
     otherClickLogic(id);
     otherPreviousPath = trid;
+    otherPreviousRow = trid;
 }
 //click logic when clicking marker or row; showing path, change plane color, show flight details
 function clickLogic(id) {
@@ -124,6 +128,15 @@ function clickLogic(id) {
             document.getElementById("flightDetails").innerHTML = "";
             mymap.removeLayer(paths[index]);
             table.rows[previousRow].style.backgroundColor = "white";
+        }
+    }
+    for (var index = 0; index < otherCounter; index++) {
+        if (index == otherPreviousPath) {
+            otherMarkers[index].setIcon(blackPlane);
+            document.getElementById("flightDetails").innerHTML = "";
+            mymap.removeLayer(otherPaths[index]);
+            var otherTable = document.getElementById('otherFlights');
+            otherTable.rows[otherPreviousRow].style.backgroundColor = "white";
         }
     }
     for (var i = 0; i < counter; i++) {
@@ -147,7 +160,6 @@ function clickLogic(id) {
                 var row = table.rows[ind];
                 if (row.cells[1].innerHTML === id) {
                     row.style.backgroundColor = "LightSkyBlue";
-                    previousRow = ind;
                 }
             }
         }
@@ -165,7 +177,16 @@ function otherClickLogic(id) {
             table.rows[otherPreviousRow].style.backgroundColor = "white";
         }
     }
-    for (var i = 0; i < counter; i++) {
+    for (var index = 0; index < counter; index++) {
+        if (index == previousPath) {
+            markers[index].setIcon(blackPlane);
+            document.getElementById("flightDetails").innerHTML = "";
+            mymap.removeLayer(paths[index]);
+            var otherTable = document.getElementById('myFlights');
+            otherTable.rows[previousRow].style.backgroundColor = "white";
+        }
+    }
+    for (var i = 0; i < otherCounter; i++) {
         if (otherMarkers[i].options.customId === id) {
             $("#flightDetails").html("");
             otherMarkers[i].setIcon(bluePlane);
@@ -184,9 +205,9 @@ function otherClickLogic(id) {
             otherPaths[i].addTo(mymap);
             for (var ind = 0; ind < numRows; ind++) {
                 var row = table.rows[ind];
-                if (row.cells[1].innerHTML === id) {
+                console.log("ind:" + ind + "row cell:" + row.cells[1].innerHTML);
+                if (table.rows[ind].cells[1].innerHTML === id) {
                     row.style.backgroundColor = "LightSkyBlue";
-                    otherPreviousRow = ind;
                 }
             }
         }
@@ -261,7 +282,8 @@ function updatingMyTable() {
     var date = new Date();
     var now_utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
         date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
-    var flightUrl1 = "../api/Flights?relative_to=" + new Date(now_utc).toISOString();
+    var iso = new Date(now_utc).toISOString().replace(".000", "");
+    var flightUrl1 = "https://localhost:44389/api/Flights?relative_to=" + iso;
     $.getJSON(flightUrl1).done(function (data) {
         data.forEach(function (flight) {
             const found = flights.some(el => el.id === flight.flight_id);
@@ -311,8 +333,9 @@ function updatingOtherTable() {
     var date = new Date();
     var now_utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
         date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
-    var flightUrl1 = "../api/Flights?relative_to=" + new Date(now_utc).toISOString() + "&sync_all";
-    $.getJSON(flightUrl1).done(function (data) {
+    var iso = new Date(now_utc).toISOString().replace(".000", "");
+    var flightUrl2 = "https://localhost:44389/api/Flights?relative_to=" + iso + "&sync_all";
+    $.getJSON(flightUrl2).done(function (data) {
         data.forEach(function (flight) {
             if (flight.is_external) {
                 const found = otherFlights.some(el => el.id === flight.flight_id);
@@ -320,8 +343,8 @@ function updatingOtherTable() {
                     otherFlights.push({ id: flight.flight_id, company: flight.company_name, endTime: flight.endTime });
                     otherMarkers.push(L.marker([flight.latitude, flight.longitude],
                         { customId: flight.flight_id, icon: blackPlane }));
-                    markers[otherCounter].addTo(mymap);
-                    markers[otherCounter].on('click', onMarkerClick);
+                    otherMarkers[otherCounter].addTo(mymap);
+                    otherMarkers[otherCounter].on('click', onMarkerClick);
                     var flightUrl = "../api/FlightPlan/" + flight.flight_id;
                     var latlngs = new Array();
                     $.getJSON(flightUrl).done(function (data) {
@@ -343,7 +366,7 @@ function updatingOtherTable() {
 
                 var content = $("#otherFlights").html();
                 if (!content.includes(flight.flight_id)) {
-                    $("#otherFlights").append("<tr id=o" + otherCounter + "><td></td>"
+                    $("#otherFlights").append("<tr id=o" + otherCounter + "><td>#</td>"
                         + "<td>" + flight.flight_id + "</td>" +
                         "<td>" + flight.company_name + "</td></tr>");
                     addOtherRowHandlers(otherCounter);
