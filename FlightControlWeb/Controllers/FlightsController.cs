@@ -18,9 +18,9 @@ namespace FlightControl.Controllers
     [ApiController]
     public class FlightsController : ControllerBase
     {
-        private IFlightsManager Model = new MyFlightManager();
-        private IPlanManager PlanModel = new MyPlanManager();
-        private IServersManager ServerModel = new MyServersManager();
+        private IFlightsManager model = new MyFlightManager();
+        private IPlanManager planModel = new MyPlanManager();
+        private IServersManager serverModel = new MyServersManager();
         private HttpClient client;
 
         public FlightsController(IHttpClientFactory client1)
@@ -33,25 +33,26 @@ namespace FlightControl.Controllers
         //[HttpGet("{id}", Name = "Get")]
         public async Task<ActionResult<Flight[]>> Get(string relative_to)
         {
-            bool sync_all = false;
+            bool isSync = false;
             string s = Request.QueryString.Value;
             if (s.Contains("sync_all"))
             {
-                sync_all = true;
+                isSync = true;
             }
             List<Flight> returnList = new List<Flight>();
             //if its the first GET request:
-            // return array of that: 1.external_is=false 2. Time is now
-            if (!sync_all)
+            // return array of that: 1.externalIs=false 2. Time is now
+            if (!isSync)
             {
                 DateTime parsedDate = DateTime.Parse(relative_to);
                 parsedDate = TimeZoneInfo.ConvertTimeToUtc(parsedDate);
-                foreach (var f in Model.GetAllFlights())
+                foreach (var f in model.GetAllFlights())
                 {
                     FlightPlan p;
-                    PlanModel.GetAllPlans().TryGetValue(f.Value.Flight_id, out p);
+                    planModel.GetAllPlans().TryGetValue(f.Value.FlightId, out p);
                     //find the start time as appear in the initial time in the flight plan
-                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.Initial_Location.Date_time));
+
+                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.InitialLocation.DateTime));
                     //update current location of flight
                     CurrentFlightLocation(startTime, parsedDate, f.Value);
                     DateTime endTime = CalcEndTime(startTime, f.Value);
@@ -61,7 +62,7 @@ namespace FlightControl.Controllers
                     int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
                     if ((resultAfterStart>=0) && (resultBeforeEnd <=0))
                     {
-                        if (f.Value.Is_external == false)
+                        if (f.Value.IsExternal == false)
                         {
                             returnList.Add(f.Value);
                         }
@@ -76,13 +77,13 @@ namespace FlightControl.Controllers
                 //FIRST PART - get all internal flights (flights source: drag & drop)
                 DateTime parsedDate = DateTime.Parse(relative_to);
                 parsedDate = TimeZoneInfo.ConvertTimeToUtc(parsedDate);
-                foreach (var f in Model.GetAllFlights())
+                foreach (var f in model.GetAllFlights())
                 {
                     FlightPlan p;
                    
-                    PlanModel.GetAllPlans().TryGetValue(f.Value.Flight_id, out p);
+                    planModel.GetAllPlans().TryGetValue(f.Value.FlightId, out p);
                     //find the start time as appear in the initial time in the flight plan
-                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.Initial_Location.Date_time));
+                    DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.InitialLocation.DateTime));
                     //update current location of flight
                     CurrentFlightLocation(startTime, parsedDate,f.Value);
                     DateTime endTime = CalcEndTime(startTime, f.Value);
@@ -96,7 +97,7 @@ namespace FlightControl.Controllers
                     }
                 }
                 //second part - get all exnternal flights (flights source: other servers)
-                foreach (var server in ServerModel.GetAllServers())
+                foreach (var server in serverModel.GetAllServers())
                 {
                     try
                     {
@@ -105,13 +106,13 @@ namespace FlightControl.Controllers
                         List<Flight> flightsFromServer = JsonConvert.DeserializeObject<List<Flight>>(contentt);
                         foreach (var externalFlight in flightsFromServer)
                         {
-                            ServerModel.GetServerToFlightDic().AddOrUpdate(externalFlight.Flight_id, server.Value,(oldKey,oldVal) => server.Value);
-                            externalFlight.Is_external = true;
-                            string url2 = server.Value.ServerURL + "/api/FlightPlan/" + externalFlight.Flight_id;
+                            serverModel.GetServerToFlightDic().AddOrUpdate(externalFlight.FlightId, server.Value,(oldKey,oldVal) => server.Value);
+                            externalFlight.IsExternal = true;
+                            string url2 = server.Value.ServerURL + "/api/FlightPlan/" + externalFlight.FlightId;
                             var plan = await this.client.GetStringAsync(url2);
                             FlightPlan planFromServer = JsonConvert.DeserializeObject<FlightPlan>(plan);
 
-                            DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(planFromServer.Initial_Location.Date_time));
+                            DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(planFromServer.InitialLocation.DateTime));
 
                             DateTime endTime = CalcEndTimeForExternal(startTime,planFromServer);
                             externalFlight.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -144,7 +145,7 @@ namespace FlightControl.Controllers
         [HttpPost]
         public Flight AddFlight(Flight f)
         {
-            Model.AddFlight(f);
+            model.AddFlight(f);
             return f;
         }
 
@@ -153,10 +154,14 @@ namespace FlightControl.Controllers
         public void Delete(string id)
         {
             FlightPlan p;
-            if (PlanModel.GetAllPlans().TryGetValue(id, out p))
+            if (planModel.GetAllPlans().TryGetValue(id, out p))
             {
-                PlanModel.GetAllPlans().TryRemove(id, out p);
-                Model.DeleteFlight(id);
+                planModel.GetAllPlans().TryRemove(id, out p);
+                model.DeleteFlight(id);
+            }
+            else
+            {
+                throw new InvalidOperationException();
             }
         }
 
@@ -166,15 +171,15 @@ namespace FlightControl.Controllers
             DateTime fEndTime;
             FlightPlan p;
             double totalSeg = 0;
-            foreach (var plan in PlanModel.GetAllPlans())
+            foreach (var plan in planModel.GetAllPlans())
             {
                 //find the flight plan
-                if (string.Compare(plan.Key, f.Flight_id, true) == 0)
+                if (string.Compare(plan.Key, f.FlightId, true) == 0)
                 {
                     p = plan.Value;
                     foreach (var seg in p.Segments)
                     {
-                        totalSeg = totalSeg + seg.Timespan_seconds;
+                        totalSeg = totalSeg + seg.TimespanSeconds;
                     }
 
                 }
@@ -192,7 +197,7 @@ namespace FlightControl.Controllers
 
             foreach (var seg in p.Segments)
             {
-                totalSeg = totalSeg + seg.Timespan_seconds;
+                totalSeg = totalSeg + seg.TimespanSeconds;
             }
 
             fEndTime = startTime.AddSeconds(totalSeg);
@@ -202,26 +207,26 @@ namespace FlightControl.Controllers
         public void CurrentFlightLocation(DateTime startTime, DateTime relativeTo, Flight f)
         {
             FlightPlan p;
-            PlanModel.GetAllPlans().TryGetValue(f.Flight_id, out p);
+            planModel.GetAllPlans().TryGetValue(f.FlightId, out p);
             int i;
             TimeSpan timeSpan = relativeTo - startTime;
             double diff = timeSpan.TotalSeconds;
             //if its in the first segment
-            if(p.Segments[0].Timespan_seconds >= diff)
+            if(p.Segments[0].TimespanSeconds >= diff)
             {
-                double percentage = (diff / p.Segments[0].Timespan_seconds);
+                double percentage = (diff / p.Segments[0].TimespanSeconds);
                 //calc: (end value-start value)* percentage
-                f.Latitude = p.Initial_Location.Latitude + (p.Segments[0].Latitude- p.Initial_Location.Latitude) * percentage;
-                f.Longitude = p.Initial_Location.Longitude + (p.Segments[0].Longitude - p.Initial_Location.Longitude) * percentage;
+                f.Latitude = p.InitialLocation.Latitude + (p.Segments[0].Latitude- p.InitialLocation.Latitude) * percentage;
+                f.Longitude = p.InitialLocation.Longitude + (p.Segments[0].Longitude - p.InitialLocation.Longitude) * percentage;
             }
             else
             {
-                diff = diff - p.Segments[0].Timespan_seconds;
+                diff = diff - p.Segments[0].TimespanSeconds;
                 for(i=1; i < p.Segments.Count; i++)
                 {
-                    if (p.Segments[i].Timespan_seconds >= diff)
+                    if (p.Segments[i].TimespanSeconds >= diff)
                     {
-                        double percentage = (diff / p.Segments[i].Timespan_seconds);
+                        double percentage = (diff / p.Segments[i].TimespanSeconds);
                         //calc: (end value-start value)* percentage
                         f.Latitude = p.Segments[i - 1].Latitude + (p.Segments[i].Latitude - p.Segments[i-1].Latitude) * percentage;
                         f.Longitude = p.Segments[i - 1].Longitude + (p.Segments[i].Longitude - p.Segments[i-1].Longitude) * percentage;
@@ -229,7 +234,7 @@ namespace FlightControl.Controllers
                     }
                     else
                     {
-                        diff -= p.Segments[i].Timespan_seconds;
+                        diff -= p.Segments[i].TimespanSeconds;
                     }
                 }
             } 

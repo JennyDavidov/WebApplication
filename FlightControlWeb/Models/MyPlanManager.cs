@@ -16,8 +16,8 @@ namespace FlightControl.Models
         {
             //generate ID:
             string id = GenerateId();
-            Flight flight = new Flight(id, p.Initial_Location.Longitude, p.Initial_Location.Latitude,
-                p.Passengers, p.Company_name, p.Initial_Location.Date_time,false);
+            Flight flight = new Flight(id, p.InitialLocation.Longitude, p.InitialLocation.Latitude,
+                p.Passengers, p.CompanyName, p.InitialLocation.DateTime,false);
             ModelFlight.AddFlight(flight);
             if(!CachePlans.TryAdd(id, p))
             {

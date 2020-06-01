@@ -12,7 +12,7 @@ namespace FlightControl.Models
         //IEnumerable is interface of collections
         ConcurrentDictionary<string, Flight> GetAllFlights();
         void AddFlight(Flight f);
-        void DeleteFlight(string flight_id);
+        void DeleteFlight(string flightId);
         void UpdateFlight(Flight f);
     }
 }

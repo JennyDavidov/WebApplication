@@ -13,12 +13,12 @@ namespace FlightControl.Controllers
     [ApiController]
     public class ServersController : ControllerBase
     {
-        private IServersManager Model = new MyServersManager();
+        private IServersManager model = new MyServersManager();
         // GET: api/Servers
         [HttpGet]
         public ConcurrentDictionary<string, Servers> Get()
         {
-            return Model.GetAllServers();
+            return model.GetAllServers();
         }
 
 
@@ -26,7 +26,14 @@ namespace FlightControl.Controllers
         [HttpPost]
         public Servers Post(Servers s)
         {
-            Model.AddServer(s);
+            Uri uriResult;
+            bool result = Uri.TryCreate(s.ServerURL, UriKind.Absolute, out uriResult)
+     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+            if (result==false)
+            {
+                throw new InvalidOperationException();
+            }
+            model.AddServer(s);
             return s;
         }
 
@@ -35,9 +42,13 @@ namespace FlightControl.Controllers
         public void Delete(string id)
         {
             Servers p;
-            if (Model.GetAllServers().TryGetValue(id, out p))
+            if (model.GetAllServers().TryGetValue(id, out p))
             {
-                Model.GetAllServers().TryRemove(id, out p);
+                model.GetAllServers().TryRemove(id, out p);
+            }
+            else
+            {
+                throw new InvalidOperationException();
             }
         }
     }

@@ -5,19 +5,19 @@ using System.Threading.Tasks;
 
 namespace FlightControl.Models
 {
-    public class Initial_location
+    public class InitialLocation
     {
         public double Longitude { get; set; }
         public double Latitude { get; set; }
-        public string Date_time { get; set; }
+        public string DateTime { get; set; }
 
-        public Initial_location(double longitude1, double latitude1, string date_time1)
+        public InitialLocation(double longitude1, double latitude1, string dateTime1)
         {
             Longitude = longitude1;
             Latitude = latitude1;
-            Date_time = date_time1;
+            DateTime = dateTime1;
         }
-        public Initial_location() { }
+        public InitialLocation() { }
 
     }
 }

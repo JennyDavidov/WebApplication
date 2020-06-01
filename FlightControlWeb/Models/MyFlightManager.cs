@@ -13,7 +13,7 @@ namespace FlightControl.Models
 
         public void AddFlight(Flight f)
         {
-            if (!CacheFlights.TryAdd(f.Flight_id, f))
+            if (!CacheFlights.TryAdd(f.FlightId, f))
             {
                 Console.WriteLine("Error adding item to cache");
             }
@@ -23,13 +23,13 @@ namespace FlightControl.Models
             }
         }
 
-        public void DeleteFlight(string flight_id)
+        public void DeleteFlight(string flightId)
         {
             string key = null;
             Flight f;
             foreach (var item in CacheFlights)
             {
-                if (string.Compare(item.Value.Flight_id, flight_id, true) == 0)
+                if (string.Compare(item.Value.FlightId, flightId, true) == 0)
                 {
                     key = item.Key;
                     f = item.Value;
@@ -56,7 +56,7 @@ namespace FlightControl.Models
             Flight a = null;
             foreach (var item in CacheFlights)
             {
-                if (string.Compare(item.Value.Flight_id, f.Flight_id, true) == 0)
+                if (string.Compare(item.Value.FlightId, f.FlightId, true) == 0)
                 {
                     a = item.Value;
                     break;
@@ -68,12 +68,12 @@ namespace FlightControl.Models
             }
             else
             {
-                a.Company_name = f.Company_name;
-                a.Date_time = f.Company_name;
+                a.CompanyName = f.CompanyName;
+                a.DateTime = f.CompanyName;
                 a.Latitude = f.Latitude;
                 a.Longitude = f.Longitude;
                 a.Passengers = f.Passengers;
-                a.Is_external = f.Is_external;
+                a.IsExternal = f.IsExternal;
             }
         }
     }
