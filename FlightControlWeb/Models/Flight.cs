@@ -9,7 +9,7 @@ namespace FlightControl.Models
 {
     public class Flight
     {
-        public string Flight_id { get; set; }
+        public string FlightId { get; set; }
 
         [JsonPropertyName("longitude")]
         [JsonProperty("longitude")]
@@ -25,30 +25,30 @@ namespace FlightControl.Models
 
         [JsonPropertyName("company_name")]
         [JsonProperty("company_name")]
-        public string Company_name { get; set; }
+        public string CompanyName { get; set; }
 
         [JsonPropertyName("date_time")]
         [JsonProperty("date_time")]
-        public string Date_time { get; set; }
+        public string DateTime { get; set; }
 
         [JsonProperty("is_external")]
         [JsonPropertyName("is_external")]
-        public bool Is_external { get; set; }
+        public bool IsExternal { get; set; }
 
         public string EndTime { get; set; }
 
 
 
-        public Flight(string Flight_id1, double Longitude1, double Latitude1,
-            int Passengers1, string Company_name1, string Date_time1, bool Is_external1)
+        public Flight(string flightId1, double longitude1, double latitude1,
+            int passengers1, string companyName1, string dateTime1, bool isExternal1)
         {
-            Flight_id = Flight_id1;
-            Longitude = Longitude1;
-            Latitude = Latitude1;
-            Passengers = Passengers1;
-            Company_name = Company_name1;
-            Date_time = Date_time1;
-            Is_external = Is_external1;
+            FlightId = flightId1;
+            Longitude = longitude1;
+            Latitude = latitude1;
+            Passengers = passengers1;
+            CompanyName = companyName1;
+            DateTime = dateTime1;
+            IsExternal = isExternal1;
         }
     }
 }

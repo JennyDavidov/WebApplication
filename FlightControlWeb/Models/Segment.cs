@@ -4,13 +4,13 @@
     {
         public double Longitude { get; set; }
         public double Latitude { get; set; }
-        public double Timespan_seconds { get; set; }
+        public double TimespanSeconds { get; set; }
 
-        public Segment(double longitude, double latitude, int timespan_seconds)
+        public Segment(double longitude, double latitude, int timespanSeconds)
         {
             Longitude = longitude;
             Latitude = latitude;
-            Timespan_seconds = timespan_seconds;
+            TimespanSeconds = timespanSeconds;
         }
         public Segment() { }
     }

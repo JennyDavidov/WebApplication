@@ -15,8 +15,8 @@ namespace FlightControl.Controllers
     [ApiController]
     public class FlightPlanController : ControllerBase
     {
-        private IPlanManager PlanModel = new MyPlanManager();
-        private IServersManager ServerModel = new MyServersManager();
+        private IPlanManager planModel = new MyPlanManager();
+        private IServersManager serverModel = new MyServersManager();
         private HttpClient client;
 
 
@@ -29,10 +29,10 @@ namespace FlightControl.Controllers
         [HttpGet("{id}", Name = "Get")]
         public async Task<ActionResult<FlightPlan>> Get(string id)
         {
-            FlightPlan p;
-            if (PlanModel.GetAllPlans().FirstOrDefault(t => string.Compare(t.Key, id, true) == 0).Value != null)
+            FlightPlan p = null;
+            if (planModel.GetAllPlans().FirstOrDefault(t => string.Compare(t.Key, id, true) == 0).Value != null)
             {
-                p = PlanModel.GetAllPlans().FirstOrDefault(t => string.Compare(t.Key, id, true) == 0).Value;
+                p = planModel.GetAllPlans().FirstOrDefault(t => string.Compare(t.Key, id, true) == 0).Value;
             }
             else
             {
@@ -40,7 +40,7 @@ namespace FlightControl.Controllers
                 {
                     //search this id in external servers
                     Servers s;
-                    ServerModel.GetServerToFlightDic().TryGetValue(id, out s);
+                    serverModel.GetServerToFlightDic().TryGetValue(id, out s);
                     string url = s.ServerURL + "/api/FlightPlan/" + id;
                     var contentt = await this.client.GetStringAsync(url);
                     p = JsonConvert.DeserializeObject<FlightPlan>(contentt);
@@ -55,13 +55,44 @@ namespace FlightControl.Controllers
 
                 }
             }
+            if (p == null)
+            {
+                return StatusCode(400);
+            }
             return p;
         }
         // POST: api/FlightPlan
         [HttpPost]
         public FlightPlan Post(FlightPlan p)
         {
-            PlanModel.AddPlan(p);
+            //check FP json validation validation
+            bool segmentsIsValid = false;
+            bool initialLocationIsValid = false;
+            if ((p.InitialLocation != null))
+            {
+                initialLocationIsValid  = (p.InitialLocation.DateTime == null) || (p.InitialLocation.Latitude > 90)
+                 || (p.InitialLocation.Latitude < -90) || (p.InitialLocation.Longitude > 180)
+                 || (p.InitialLocation.Longitude < -180);
+            }
+            if ((p.Segments != null))
+            {
+                foreach(var  seg in p.Segments)
+                {
+                    bool result = (seg.Latitude < -90) || (seg.Latitude > 180) ||
+                        (seg.Latitude < -90) || (seg.Longitude > 180) || (seg.TimespanSeconds <= 0);
+                    segmentsIsValid = segmentsIsValid || result;
+                }
+            }
+
+            bool isNull = (p.CompanyName == null) || (p.Passengers <= 0) || (p.Segments == null) || (p.InitialLocation == null)
+                 || initialLocationIsValid || segmentsIsValid;
+
+            if (isNull == true)
+            {
+                throw new InvalidOperationException();
+            }
+
+            planModel.AddPlan(p);
             return p;
         }
 
