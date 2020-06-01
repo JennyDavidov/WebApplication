@@ -155,8 +155,8 @@ function clickLogic(id) {
                 let lastSegm = data.segments.length - 1;
                 $("#flightDetails").html("<tr><td>" + id + "</td>" +
                     "<td>" + data.company_name + "</td>" + "<td>" + data.passengers + "</td>" +
-                    "<td>" + data.initial_Location.date_time + "</td>" +
-                    "<td>{" + data.initial_Location.latitude + "," + data.initial_Location.longitude + "}</td>" +
+                    "<td>" + data.initial_location.date_time + "</td>" +
+                    "<td>{" + data.initial_location.latitude + "," + data.initial_location.longitude + "}</td>" +
                     "<td>" + end + "</td>" +
                     "<td>{" + data.segments[lastSegm].latitude + "," + data.segments[lastSegm].longitude + "}</td>" +
                     "</tr>");
@@ -210,8 +210,8 @@ function otherClickLogic(id) {
                 let lastSegm = data.segments.length - 1;
                 $("#flightDetails").html("<tr><td>" + id + "</td>" +
                     "<td>" + data.company_name + "</td>" + "<td>" + data.passengers + "</td>" +
-                    "<td>" + data.initial_Location.date_time + "</td>" +
-                    "<td>{" + data.initial_Location.latitude + "," + data.initial_Location.longitude + "}</td>" +
+                    "<td>" + data.initial_location.date_time + "</td>" +
+                    "<td>{" + data.initial_location.latitude + "," + data.initial_location.longitude + "}</td>" +
                     "<td>" + end + "</td>" +
                     "<td>{" + data.segments[lastSegm].latitude + "," + data.segments[lastSegm].longitude + "}</td>" +
                     "</tr>");
@@ -308,9 +308,11 @@ function deleteRow(e) {
     });
 }
 function deleteOtherRow(trid) {
+    console.log("trid: " + trid);
     table = document.getElementById('otherFlights');
-    $(document).off("click", $(table.rows[trid]));
+    $(document).off("click", $(table.rows[(table.rows.length - 1)]));
     let id = table.rows[trid].cells[1].innerHTML;
+    console.log("id: " + id);
     table.rows[trid].remove();
     mymap.removeLayer(otherMarkers[trid]);
     mymap.removeLayer(otherPaths[trid]);
@@ -319,13 +321,15 @@ function deleteOtherRow(trid) {
         $("#flightDetails").html("");
     }
     otherFlights.splice(trid, 1);
+    console.log("length flights: " + otherFlights.length);
     otherMarkers.splice(trid, 1);
     otherPaths.splice(trid, 1);
     $('#otherFlights > tr').each(function () {
         let thisId = trid;
-        let prevId = $(this).attr('id');
+        let string = $(this).attr('id');
+        let prevId = string.substr(1,1);
         if (prevId > thisId) {
-            $(this).attr('id', thisId);
+            $(this).attr('id', "o" + thisId);
             thisId++;
         }
     });
@@ -335,9 +339,9 @@ function deleteOtherRow(trid) {
 function updatingMyTable() {
     setTimeout(updatingMyTable, 2000);
     let date = new Date();
-    let now_utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
+    let nowUtc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
         date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
-    let iso = new Date(now_utc).toISOString().replace(".000", "");
+    let iso = new Date(nowUtc).toISOString().replace(".000", "");
     let flightUrl1 = "../api/Flights?relative_to=" + iso;
     $.getJSON(flightUrl1).done(function (data) {
         data.forEach(function (flight) {
@@ -351,7 +355,7 @@ function updatingMyTable() {
                 let flightUrl = "../api/FlightPlan/" + flight.flight_id;
                 let latlngs = new Array();
                 $.getJSON(flightUrl).done(function (data) {
-                    latlngs.push([data.initial_Location.latitude, data.initial_Location.longitude]);
+                    latlngs.push([data.initial_location.latitude, data.initial_location.longitude]);
                     for (let j = 0; j < data.segments.length; j++) {
                         latlngs.push([data.segments[j].latitude, data.segments[j].longitude]);
                     }
@@ -361,9 +365,9 @@ function updatingMyTable() {
             }
             else {
                 //flight is over
-                let timeLessSec = new Date(now_utc);
-                timeLessSec.setSeconds(new Date(now_utc).getSeconds() + 1);
-                if ((new Date(now_utc).toISOString() === new Date(flight.endTime).toISOString()) ||
+                let timeLessSec = new Date(nowUtc);
+                timeLessSec.setSeconds(new Date(nowUtc).getSeconds() + 1);
+                if ((new Date(nowUtc).toISOString() === new Date(flight.endTime).toISOString()) ||
                     (new Date(timeLessSec).toISOString() === new Date(flight.endTime).toISOString())) {
                     for (let i = 0; i < counter; i++) {
                         if (flights[i].id === flight.flight_id) {
@@ -399,10 +403,11 @@ function updatingMyTable() {
 }
 function updatingOtherTable() {
     setTimeout(updatingOtherTable, 2000);
+    let deleted = false;
     let date = new Date();
-    let now_utc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
+    let nowUtc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
         date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
-    let iso = new Date(now_utc).toISOString().replace(".000", "");
+    let iso = new Date(nowUtc).toISOString().replace(".000", "");
     let flightUrl2 = "../api/Flights?relative_to=" + iso + "&sync_all";
     $.getJSON(flightUrl2).done(function (data) {
         data.forEach(function (flight) {
@@ -412,56 +417,62 @@ function updatingOtherTable() {
                     otherFlights.push({ id: flight.flight_id, company: flight.company_name, endTime: flight.endTime });
                     otherMarkers.push(window.L.marker([flight.latitude, flight.longitude],
                         { customId: flight.flight_id, icon: blackPlane }));
+                    console.log("counter when adding to arrays " + otherCounter);
                     otherMarkers[otherCounter].addTo(mymap);
                     otherMarkers[otherCounter].on('click', onMarkerClick);
                     let flightUrl = "../api/FlightPlan/" + flight.flight_id;
                     let latlngs = new Array();
                     $.getJSON(flightUrl).done(function (data) {
-                        latlngs.push([data.initial_Location.latitude, data.initial_Location.longitude]);
+                        latlngs.push([data.initial_location.latitude, data.initial_location.longitude]);
                         for (let j = 0; j < data.segments.length; j++) {
                             latlngs.push([data.segments[j].latitude, data.segments[j].longitude]);
                         }
                         otherPaths.push(window.L.polyline(latlngs, { color: 'blue' }));
-                        otherCounter++;
                     });
+                    otherCounter++;
+                    console.log("counter after ++ " + otherCounter);
                 }
                 else {
-                    //flight is over
-                    let timeLessSec = new Date(now_utc);
-                    timeLessSec.setSeconds(new Date(now_utc).getSeconds() + 1);
-                    if ((new Date(now_utc).toISOString() === new Date(flight.endTime).toISOString()) ||
-                        (new Date(timeLessSec).toISOString() === new Date(flight.endTime).toISOString())) {
-                        for (let i = 0; i < otherCounter; i++) {
-                            if (otherFlights[i].id === flight.flight_id) {
-                                deleteOtherRow(i);
-                            }
-                        }
-                    }
                     for (let i = 0; i < otherCounter; i++) {
                         if (otherFlights[i].id === flight.flight_id) {
                             otherMarkers[i].setLatLng([flight.latitude, flight.longitude]);
                         }
                     }
+                    //flight is over
+                    let timeLessSec = new Date(nowUtc);
+                    timeLessSec.setSeconds(new Date(nowUtc).getSeconds() + 1);
+                    if ((new Date(nowUtc).toISOString() === new Date(flight.endTime).toISOString()) ||
+                        (new Date(timeLessSec).toISOString() === new Date(flight.endTime).toISOString())) {
+                        for (let i = 0; i < otherCounter; i++) {
+                            if (otherFlights[i].id === flight.flight_id) {
+                                deleteOtherRow(i);
+                                deleted = true;
+                                break;
+                            }
+                        }
+                    }
                 }
-
-                let content = $("#otherFlights").html();
-                if (!content.includes(flight.flight_id)) {
-                    $("#otherFlights").append("<tr id=o" + otherCounter + "><td>#</td>"
-                        + "<td>" + flight.flight_id + "</td>" +
-                        "<td>" + flight.company_name + "</td></tr>");
-                    addOtherRowHandlers(otherCounter);
+                if (!deleted) {
+                    let content = $("#otherFlights").html();
+                    if (!content.includes(flight.flight_id)) {
+                        console.log("counter when adding to table " + otherCounter);
+                        $("#otherFlights").append("<tr id=o" + (otherCounter - 1) + "><td>#</td>"
+                            + "<td>" + flight.flight_id + "</td>" +
+                            "<td>" + flight.company_name + "</td></tr>");
+                        addOtherRowHandlers(otherCounter - 1);
+                    }
                 }
             }
         });
-    })
-        .fail(function () {
-            window.Toastify({
-                text: "Error",
-                duration: 1500,
-                position: 'left',
-                backgroundColor: "linear-gradient(to right, #FF6347, #B22222)"
-            }).showToast();
-        });
+    });
+        //.fail(function () {
+        //    window.Toastify({
+        //        text: "Error",
+        //        duration: 1500,
+        //        position: 'left',
+        //        backgroundColor: "linear-gradient(to right, #FF6347, #B22222)"
+        //    }).showToast();
+        //});
 }
 updatingMyTable();
 updatingOtherTable();
