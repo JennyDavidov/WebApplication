@@ -79,6 +79,7 @@ namespace FlightControl.Controllers
                 foreach (var f in Model.GetAllFlights())
                 {
                     FlightPlan p;
+                   
                     PlanModel.GetAllPlans().TryGetValue(f.Value.Flight_id, out p);
                     //find the start time as appear in the initial time in the flight plan
                     DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.Initial_Location.Date_time));
@@ -106,9 +107,14 @@ namespace FlightControl.Controllers
                         {
                             ServerModel.GetServerToFlightDic().AddOrUpdate(externalFlight.Flight_id, server.Value,(oldKey,oldVal) => server.Value);
                             externalFlight.Is_external = true;
+                            string url2 = server.Value.ServerURL + "/api/FlightPlan/" + externalFlight.Flight_id;
+                            var plan = await this.client.GetStringAsync(url2);
+                            FlightPlan planFromServer = JsonConvert.DeserializeObject<FlightPlan>(plan);
 
-                            DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(externalFlight.Date_time));
-                            DateTime endTime = CalcEndTime(startTime, externalFlight);
+                            DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(planFromServer.Initial_Location.Date_time));
+
+                            DateTime endTime = CalcEndTimeForExternal(startTime,planFromServer);
+                            externalFlight.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
                             int resultAfterStart = DateTime.Compare(parsedDate, startTime);
                             int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
                             if ((resultAfterStart >= 0) && (resultBeforeEnd <= 0))
@@ -117,11 +123,11 @@ namespace FlightControl.Controllers
                             }
                         }
                     }
-                    catch (WebException e)
+                    catch (WebException)
                     {
                          return BadRequest();
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         return StatusCode(500);
 
@@ -173,6 +179,22 @@ namespace FlightControl.Controllers
 
                 }
             }
+            fEndTime = startTime.AddSeconds(totalSeg);
+            return fEndTime;
+        }
+
+        public DateTime CalcEndTimeForExternal(DateTime startTime, FlightPlan p)
+        {
+            DateTime fEndTime;
+            double totalSeg = 0;
+
+            
+
+            foreach (var seg in p.Segments)
+            {
+                totalSeg = totalSeg + seg.Timespan_seconds;
+            }
+
             fEndTime = startTime.AddSeconds(totalSeg);
             return fEndTime;
         }

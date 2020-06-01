@@ -45,11 +45,11 @@ namespace FlightControl.Controllers
                     var contentt = await this.client.GetStringAsync(url);
                     p = JsonConvert.DeserializeObject<FlightPlan>(contentt);
                 }
-                catch (WebException e)
+                catch (WebException)
                 {
                     return BadRequest();
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return StatusCode(500);
 

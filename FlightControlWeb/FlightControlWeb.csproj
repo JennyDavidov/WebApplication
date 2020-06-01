@@ -4,6 +4,11 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <WarningLevel>2</WarningLevel>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="bin\Debug\netcoreapp3.1\ru\pt-BR\**" />
     <Content Remove="bin\Debug\netcoreapp3.1\ru\pt-BR\**" />
@@ -32,6 +37,10 @@
     <None Include="wwwroot\Scripts\jquery\jquery.slim.min.js" />
     <None Include="wwwroot\Scripts\jquery\jquery.slim.min.map" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(ProjectDir)wwwroot&quot; &quot;$(SolutionDir)out/wwwroot&quot; /Y /I /E /R" />
+  </Target>
 
 
 </Project>
