@@ -9,6 +9,8 @@ namespace FlightControl.Models
 {
     public class Flight
     {
+        [JsonPropertyName("flight_id")]
+        [JsonProperty("flight_id")]
         public string FlightId { get; set; }
 
         [JsonPropertyName("longitude")]

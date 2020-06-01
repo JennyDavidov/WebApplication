@@ -102,8 +102,17 @@ namespace FlightControl.Controllers
                     try
                     {
                         string url = server.Value.ServerURL + "/api/Flights?relative_to=" + relative_to;
-                        var contentt = await this.client.GetStringAsync(url);
-                        List<Flight> flightsFromServer = JsonConvert.DeserializeObject<List<Flight>>(contentt);
+                        List<Flight> flightsFromServer;
+                        try
+                        {
+                            var contentt = await this.client.GetStringAsync(url);
+                            flightsFromServer = JsonConvert.DeserializeObject<List<Flight>>(contentt);
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                        
                         foreach (var externalFlight in flightsFromServer)
                         {
                             serverModel.GetServerToFlightDic().AddOrUpdate(externalFlight.FlightId, server.Value,(oldKey,oldVal) => server.Value);
