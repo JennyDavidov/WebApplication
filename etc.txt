@@ -1,0 +1,12 @@
+206726689,Yael Berman
+206792186,Jenny Davidov
+
+Our Unit Test is focusing in testing the exception mechanism on our Get function in Flight Controller class.
+This method purpose is to return all flights in the time that passed. 
+The method implements the Asynchronous princile, and includes the "async" "await" keywords.
+
+Out Test define an MOCK object that represents the external serve, so we don't need to 
+make real request to the server and mixproduction and testing environment.
+The mock has a field of client. 
+
+We also used a STUB method to represent the 
