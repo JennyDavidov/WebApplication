@@ -3,7 +3,7 @@ let flights = new Array();
 //array other flights
 let otherFlights = new Array();
 //configuring map and marker icon
-let mymap = window.L.map('mapid').setView([51.505, -0.09], 2);
+let mymap = window.L.map('mapid').setView([51.505, -0.09], 1);
 window.L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(mymap);
@@ -308,11 +308,9 @@ function deleteRow(e) {
     });
 }
 function deleteOtherRow(trid) {
-    console.log("trid: " + trid);
     table = document.getElementById('otherFlights');
     $(document).off("click", $(table.rows[(table.rows.length - 1)]));
     let id = table.rows[trid].cells[1].innerHTML;
-    console.log("id: " + id);
     table.rows[trid].remove();
     mymap.removeLayer(otherMarkers[trid]);
     mymap.removeLayer(otherPaths[trid]);
@@ -321,7 +319,6 @@ function deleteOtherRow(trid) {
         $("#flightDetails").html("");
     }
     otherFlights.splice(trid, 1);
-    console.log("length flights: " + otherFlights.length);
     otherMarkers.splice(trid, 1);
     otherPaths.splice(trid, 1);
     $('#otherFlights > tr').each(function () {
@@ -417,7 +414,6 @@ function updatingOtherTable() {
                     otherFlights.push({ id: flight.flight_id, company: flight.company_name, endTime: flight.endTime });
                     otherMarkers.push(window.L.marker([flight.latitude, flight.longitude],
                         { customId: flight.flight_id, icon: blackPlane }));
-                    console.log("counter when adding to arrays " + otherCounter);
                     otherMarkers[otherCounter].addTo(mymap);
                     otherMarkers[otherCounter].on('click', onMarkerClick);
                     let flightUrl = "../api/FlightPlan/" + flight.flight_id;
@@ -430,7 +426,6 @@ function updatingOtherTable() {
                         otherPaths.push(window.L.polyline(latlngs, { color: 'blue' }));
                     });
                     otherCounter++;
-                    console.log("counter after ++ " + otherCounter);
                 }
                 else {
                     for (let i = 0; i < otherCounter; i++) {
@@ -455,7 +450,6 @@ function updatingOtherTable() {
                 if (!deleted) {
                     let content = $("#otherFlights").html();
                     if (!content.includes(flight.flight_id)) {
-                        console.log("counter when adding to table " + otherCounter);
                         $("#otherFlights").append("<tr id=o" + (otherCounter - 1) + "><td>#</td>"
                             + "<td>" + flight.flight_id + "</td>" +
                             "<td>" + flight.company_name + "</td></tr>");
@@ -465,14 +459,6 @@ function updatingOtherTable() {
             }
         });
     });
-        //.fail(function () {
-        //    window.Toastify({
-        //        text: "Error",
-        //        duration: 1500,
-        //        position: 'left',
-        //        backgroundColor: "linear-gradient(to right, #FF6347, #B22222)"
-        //    }).showToast();
-        //});
 }
 updatingMyTable();
 updatingOtherTable();
