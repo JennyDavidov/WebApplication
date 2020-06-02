@@ -9,4 +9,4 @@ Out Test define an MOCK object that represents the external serve, so we don't n
 make real request to the server and mixproduction and testing environment.
 The mock has a field of client. 
 
-We also used a STUB method to represent the 
+We also used a STUB method to represent the error occur in the connection to externl server.

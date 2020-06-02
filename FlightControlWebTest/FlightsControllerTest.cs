@@ -1,13 +1,13 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using FlightControl;
-using FlightControl.Controllers;
 using Moq;
+using FlightControl;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using FlightControl.Controllers;
 using FlightControl.Models;
 using System;
 
@@ -43,7 +43,6 @@ namespace FlightControlWebTest
 
             //ASSERT
             Assert.AreEqual(StatusCodes.Status400BadRequest, (res.Result as StatusCodeResult).StatusCode);
-
 
         }
     }

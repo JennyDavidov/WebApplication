@@ -60,7 +60,7 @@ namespace FlightControl.Controllers
                     f.Value.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
                     int resultAfterStart = DateTime.Compare(parsedDate, startTime);
                     int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
-                    if ((resultAfterStart>=0) && (resultBeforeEnd <=0))
+                    if ((resultAfterStart >= 0) && (resultBeforeEnd <= 0))
                     {
                         if (f.Value.IsExternal == false)
                         {
@@ -80,12 +80,12 @@ namespace FlightControl.Controllers
                 foreach (var f in model.GetAllFlights())
                 {
                     FlightPlan p;
-                   
+
                     planModel.GetAllPlans().TryGetValue(f.Value.FlightId, out p);
                     //find the start time as appear in the initial time in the flight plan
                     DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(p.InitialLocation.DateTime));
                     //update current location of flight
-                    CurrentFlightLocation(startTime, parsedDate,f.Value);
+                    CurrentFlightLocation(startTime, parsedDate, f.Value);
                     DateTime endTime = CalcEndTime(startTime, f.Value);
                     //update end time of flight
                     f.Value.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
@@ -97,6 +97,7 @@ namespace FlightControl.Controllers
                     }
                 }
                 //second part - get all exnternal flights (flights source: other servers)
+                bool flagIsError = false;
                 foreach (var server in serverModel.GetAllServers())
                 {
                     try
@@ -110,12 +111,13 @@ namespace FlightControl.Controllers
                         }
                         catch
                         {
+                            flagIsError = true;
                             continue;
                         }
-                        
+
                         foreach (var externalFlight in flightsFromServer)
                         {
-                            serverModel.GetServerToFlightDic().AddOrUpdate(externalFlight.FlightId, server.Value,(oldKey,oldVal) => server.Value);
+                            serverModel.GetServerToFlightDic().AddOrUpdate(externalFlight.FlightId, server.Value, (oldKey, oldVal) => server.Value);
                             externalFlight.IsExternal = true;
                             string url2 = server.Value.ServerURL + "/api/FlightPlan/" + externalFlight.FlightId;
                             var plan = await this.client.GetStringAsync(url2);
@@ -123,7 +125,7 @@ namespace FlightControl.Controllers
 
                             DateTime startTime = TimeZoneInfo.ConvertTimeToUtc(DateTime.Parse(planFromServer.InitialLocation.DateTime));
 
-                            DateTime endTime = CalcEndTimeForExternal(startTime,planFromServer);
+                            DateTime endTime = CalcEndTimeForExternal(startTime, planFromServer);
                             externalFlight.EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
                             int resultAfterStart = DateTime.Compare(parsedDate, startTime);
                             int resultBeforeEnd = DateTime.Compare(parsedDate, endTime);
@@ -133,22 +135,22 @@ namespace FlightControl.Controllers
                             }
                         }
                     }
-                    catch (WebException)
+                    catch (Exception e)
                     {
-                         return BadRequest();
-                    }
-                    catch (Exception)
-                    {
-                        return StatusCode(500);
+                        throw e;
 
                     }
+                }
+                if (flagIsError)
+                {
+                    return BadRequest();
                 }
                 Flight[] array = returnList.ToArray();
                 return array;
             }
         }
 
-       
+
 
         // POST: api/Flights
         [HttpPost]
@@ -202,7 +204,7 @@ namespace FlightControl.Controllers
             DateTime fEndTime;
             double totalSeg = 0;
 
-            
+
 
             foreach (var seg in p.Segments)
             {
@@ -221,24 +223,24 @@ namespace FlightControl.Controllers
             TimeSpan timeSpan = relativeTo - startTime;
             double diff = timeSpan.TotalSeconds;
             //if its in the first segment
-            if(p.Segments[0].TimespanSeconds >= diff)
+            if (p.Segments[0].TimespanSeconds >= diff)
             {
                 double percentage = (diff / p.Segments[0].TimespanSeconds);
                 //calc: (end value-start value)* percentage
-                f.Latitude = p.InitialLocation.Latitude + (p.Segments[0].Latitude- p.InitialLocation.Latitude) * percentage;
+                f.Latitude = p.InitialLocation.Latitude + (p.Segments[0].Latitude - p.InitialLocation.Latitude) * percentage;
                 f.Longitude = p.InitialLocation.Longitude + (p.Segments[0].Longitude - p.InitialLocation.Longitude) * percentage;
             }
             else
             {
                 diff = diff - p.Segments[0].TimespanSeconds;
-                for(i=1; i < p.Segments.Count; i++)
+                for (i = 1; i < p.Segments.Count; i++)
                 {
                     if (p.Segments[i].TimespanSeconds >= diff)
                     {
                         double percentage = (diff / p.Segments[i].TimespanSeconds);
                         //calc: (end value-start value)* percentage
-                        f.Latitude = p.Segments[i - 1].Latitude + (p.Segments[i].Latitude - p.Segments[i-1].Latitude) * percentage;
-                        f.Longitude = p.Segments[i - 1].Longitude + (p.Segments[i].Longitude - p.Segments[i-1].Longitude) * percentage;
+                        f.Latitude = p.Segments[i - 1].Latitude + (p.Segments[i].Latitude - p.Segments[i - 1].Latitude) * percentage;
+                        f.Longitude = p.Segments[i - 1].Longitude + (p.Segments[i].Longitude - p.Segments[i - 1].Longitude) * percentage;
                         break;
                     }
                     else
@@ -246,7 +248,7 @@ namespace FlightControl.Controllers
                         diff -= p.Segments[i].TimespanSeconds;
                     }
                 }
-            } 
+            }
         }
 
     }
